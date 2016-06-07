@@ -1,5 +1,5 @@
 require(readr)
-require(plyr)
+require(dplyr)
 require(parallel)
 
 cores <- detectCores() - 4
@@ -82,8 +82,8 @@ latmin <-  49.195
 lonmax <- -123.020
 latmax <- 49.315
 
-fdat.van <- fdat[fdat$lon > lonmin & fdat$lon < lonmax,]
-fdat.van <- fdat.van[fdat.van$lat > latmin & fdat.van$lat < latmax,]
+fdat_van <- fdat[fdat$lon > lonmin & fdat$lon < lonmax,]
+fdat_van <- fdat_van[fdat_van$lat > latmin & fdat_van$lat < latmax,]
 
 # While we're at it, let's get a couple other Canadian cities
 
@@ -94,8 +94,8 @@ latmin <-  45.411
 lonmax <- -73.440
 latmax <- 45.587
 
-fdat.mtl <- fdat[fdat$lon > lonmin & fdat$lon < lonmax,]
-fdat.mtl <- fdat.mtl[fdat.mtl$lat > latmin & fdat.mtl$lat < latmax,]
+fdat_mtl <- fdat[fdat$lon > lonmin & fdat$lon < lonmax,]
+fdat_mtl <- fdat_mtl[fdat_mtl$lat > latmin & fdat_mtl$lat < latmax,]
 
 # Toronto bbox
 # -79.613803,43.603032,-79.225156,43.808504
@@ -104,8 +104,8 @@ latmin <-  43.603
 lonmax <- -79.225
 latmax <- 43.809
 
-fdat.to <- fdat[fdat$lon > lonmin & fdat$lon < lonmax,]
-fdat.to <- fdat.to[fdat.to$lat > latmin & fdat.to$lat < latmax,]
+fdat_to <- fdat[fdat$lon > lonmin & fdat$lon < lonmax,]
+fdat_to <- fdat_to[fdat_to$lat > latmin & fdat_to$lat < latmax,]
 
 fdat <- NULL
 flickrList <- NULL
@@ -115,13 +115,44 @@ tmp <- NULL
 # 1 by 1 download photos and check colour
 
 require(RImagePalette)
-require(readr)
+require(rvest)
+require(jpeg)
 
 # For each picture, the url connects to the photos page. We need a direct link to the photo itself. 
+# General approach
+# a <- read_html("http://www.flickr.com/photos/23740710@N04/3648061643/")
+# b <- a %>% html_nodes("meta") %>% html_attrs()
+# img <- grep("og:image",b)[1]
+# jpg <- grep("jpg",b[[img]]) 
+# c <- b[[img]][[jpg]]
+# # download file as a temp file to read and open
+# z <- tempfile()
+# download.file(c,z,mode = "wb")
+# pic <- readJPEG(z)
+# #pq1 <- quantize_image(pic,1)
+# #pq3 <- quantize_image(pic,3)
+# pp1 <- image_palette(pic,1)
+# pp3 <- image_palette(pic,3)
+# pp5 <- image_palette(pic,5)
+# file.remove(z)
 
-a <- read_html("http://www.flickr.com/photos/23740710@N04/3648061643/")
-b <- a %>% html_nodes("meta") %>% html_attrs()
-img <- grep("og:image",b)[1]
-jpg <- grep("jpg",b[[img]]) 
-c <- b[[img]][[jpg]]
-c
+fdat_van200 <- filter(fdat_van) %>% sample_n(.,200)
+
+# function to get the palettes of photos
+get_pal <- function(x) {
+  a <- read_html(x)
+  b <- a %>% html_nodes("meta") %>% html_attrs()
+  img <- grep("og:image",b)[1]
+  jpg <- grep("jpg",b[[img]]) 
+  c <- b[[img]][[jpg]]
+  z <- tempfile()
+  download.file(c,z,mode = "wb")
+  pic <- readJPEG(z)
+  pp1 <- image_palette(pic,1)
+  pp3 <- image_palette(pic,3)
+  pp5 <- image_palette(pic,5)
+  pal_list <- list(pp1,pp3,pp5)
+  names(pal_list) <- c("Pal1","Pal3","Pal5")
+  file.remove(z)
+  return(pal_list)
+}
