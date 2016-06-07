@@ -156,3 +156,18 @@ get_pal <- function(x) {
   file.remove(z)
   return(pal_list)
 }
+
+# All below is broken
+# add a safety to catch errors
+get_pal_safe <- failwith(NA,get_pal)
+
+pal200 <- lapply(fdat_van200$url, get_pal_safe)
+list_length_index <- lengths(pal200)
+pal200df <- as.data.frame(do.call(rbind,lapply(pal200, 'length<-',max(list_length_index))))
+names(pal200df) <- c("pal1","pal3","pal5")
+
+# pal200df$pal1 <- as.character(pal200df$pal1)
+# pal200df$pal3 <- as.character(pal200df$pal3)
+# pal200df$pal5 <- as.character(pal200df$pal5)
+# fdat_van200 <- cbind.data.frame(fdat_van200,pal200df)
+# write_csv(fdat_van200, "fdat_van200.csv")
